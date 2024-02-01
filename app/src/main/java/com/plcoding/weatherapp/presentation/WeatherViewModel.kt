@@ -9,6 +9,7 @@ import com.plcoding.weatherapp.domain.location.LocationTracker
 import com.plcoding.weatherapp.domain.repository.WeatherRepository
 import com.plcoding.weatherapp.domain.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,13 +23,14 @@ class WeatherViewModel @Inject constructor(
         private set
 
     fun loadWeatherInfo() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             state = state.copy(
                 isLoading = true,
                 error = null
             )
             locationTracker.getCurrentLocation()?.let { location ->
-                when(val result = repository.getWeatherData(location.latitude, location.longitude)) {
+                when (val result =
+                    repository.getWeatherData(location.latitude, location.longitude)) {
                     is Resource.Success -> {
                         state = state.copy(
                             weatherInfo = result.data,
@@ -36,11 +38,12 @@ class WeatherViewModel @Inject constructor(
                             error = null
                         )
                     }
+
                     is Resource.Error -> {
                         state = state.copy(
                             weatherInfo = null,
                             isLoading = false,
-                            error =result.message
+                            error = result.message
                         )
                     }
                 }
